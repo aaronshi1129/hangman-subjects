@@ -1,0 +1,642 @@
+<html><head><base href="/" /><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hangman v2.</title>
+<style>
+:root {
+  --primary: #ffffff;
+  --secondary: #34495e;
+  --accent: #e74c3c;
+  --text: #2c3e50;
+  --light-gray: #ecf0f1;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--primary);
+  color: var(--text);
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+}
+
+.start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px;
+}
+
+.start-screen h1 {
+  font-size: 3rem;
+  margin-bottom: 30px;
+}
+
+.instruction-box {
+  background-color: var(--light-gray);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 30px;
+  max-width: 600px;
+  text-align: left;
+}
+
+.instruction-box h2 {
+  text-align: center;
+  margin-top: 0;
+}
+
+.instruction-box ul {
+  margin-left: 0;
+  padding-left: 20px;
+}
+
+.instruction-box li {
+  margin-bottom: 10px;
+}
+
+.start-buttons {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.btn {
+  background: var(--secondary);
+  border: none;
+  color: white;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+}
+
+.btn-accent {
+  background: var(--accent);
+}
+
+.btn-large {
+  font-size: 1.5rem;
+  padding: 20px 40px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal {
+  background: white;
+  border-radius: 10px;
+  padding: 30px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal h2 {
+  margin-top: 0;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group select, .form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.form-group textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.hangman-container {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.hangman-svg {
+  background: var(--secondary);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.word-display {
+  font-size: 2.5rem;
+  letter-spacing: 10px;
+  margin: 20px 0;
+}
+
+.keyboard {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  max-width: 500px;
+}
+
+.key {
+  background: var(--secondary);
+  border: none;
+  color: white;
+  padding: 15px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.key:hover {
+  background: var(--accent);
+  transform: scale(1.1);
+}
+
+.key.used {
+  background: #7f8c8d;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.message {
+  font-size: 1.5rem;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.reset-btn, .hint-btn, .main-menu-btn {
+  background: var(--accent);
+  border: none;
+  color: white;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 5px;
+  margin: 10px;
+  transition: all 0.3s ease;
+}
+
+.reset-btn:hover, .hint-btn:hover, .main-menu-btn:hover {
+  transform: scale(1.1);
+}
+
+.hint-btn:disabled {
+  background: #7f8c8d;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.timer {
+  font-size: 1.2rem;
+  margin: 10px 0;
+  color: #34495e;
+}
+
+.footer {
+  margin-top: 50px;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.game-info {
+  background-color: var(--light-gray);
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.category-display {
+  font-weight: bold;
+  color: var(--accent);
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Start Screen -->
+  <div class="start-screen" id="start-screen">
+    <h1>Hangman</h1>
+    
+    <div class="instruction-box">
+      <h2>How to Play</h2>
+      <ul>
+        <li>Guess the hidden word by selecting letters on the keyboard.</li>
+        <li>Each incorrect guess adds a part to the hangman.</li>
+        <li>If the hangman is completed before you guess the word, you lose!</li>
+        <li>You have 6 incorrect guesses before game over.</li>
+        <li>Use the hint button to reveal a letter (one hint per game).</li>
+        <li>Try to guess the word in the shortest time possible!</li>
+      </ul>
+    </div>
+    
+    <div class="start-buttons">
+      <button class="btn btn-accent btn-large" id="start-btn">Start Game</button>
+      <button class="btn btn-large" id="settings-btn">Settings</button>
+    </div>
+  </div>
+  
+  <!-- Game Screen -->
+  <div class="hangman-container" id="game-screen">
+    <h1>Hangman</h1>
+    <div class="game-info">
+      Category: <span class="category-display" id="category-display">Math Terms</span>
+    </div>
+    <div class="timer">Time: 0:00</div>
+    <svg class="hangman-svg" width="200" height="250" viewBox="0 0 200 250">
+      <!-- Gallows -->
+      <line x1="20" y1="230" x2="180" y2="230" stroke="white" stroke-width="3"/>
+      <line x1="40" y1="230" x2="40" y2="20" stroke="white" stroke-width="3"/>
+      <line x1="40" y1="20" x2="120" y2="20" stroke="white" stroke-width="3"/>
+      <line x1="120" y1="20" x2="120" y2="50" stroke="white" stroke-width="3"/>
+      
+      <!-- Hangman parts (initially hidden) -->
+      <g id="hangman-parts" stroke="white" fill="none" stroke-width="3"></g>
+    </svg>
+    
+    <div class="word-display"></div>
+    <div class="keyboard"></div>
+    <div class="message"></div>
+    <div class="button-container">
+      <button class="hint-btn">Get Hint</button>
+      <button class="reset-btn">New Game</button>
+      <button class="main-menu-btn">Main Menu</button>
+    </div>
+  </div>
+  
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal">
+      <h2>Game Settings</h2>
+      
+      <div class="form-group">
+        <label for="word-category">Word Category:</label>
+        <select id="word-category">
+          <option value="math">Math Terms</option>
+          <option value="history">History Terms</option>
+          <option value="geography">Geography Terms</option>
+          <option value="earth-science">Earth Science Terms</option>
+          <option value="physics">Physics Terms</option>
+          <option value="chemistry">Chemistry Terms</option>
+          <option value="biology">Biology Terms</option>
+          <option value="custom">Custom Words</option>
+        </select>
+      </div>
+      
+      <div class="form-group" id="custom-words-container">
+        <label for="custom-words">Custom Words (enter at least 5 words, one per line):</label>
+        <textarea id="custom-words" placeholder="Enter custom words here..."></textarea>
+        <p class="word-count-message" id="word-count-message">0 words added. You need at least 5 words.</p>
+      </div>
+      
+      <div class="modal-buttons">
+        <button class="btn" id="close-settings-btn">Cancel</button>
+        <button class="btn btn-accent" id="save-settings-btn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const wordBanks = {
+  math: [
+    'ALGEBRA', 'GEOMETRY', 'CALCULUS', 'TRIGONOMETRY', 'EQUATION', 'FUNCTION', 'DERIVATIVE', 'INTEGRAL',
+    'POLYNOMIAL', 'FRACTION', 'DECIMAL', 'EXPONENT', 'LOGARITHM', 'MATRIX', 'VECTOR', 'ALGORITHM',
+    'PROBABILITY', 'STATISTICS', 'THEOREM', 'FORMULA'
+  ],
+  history: [
+    'REVOLUTION', 'CIVILIZATION', 'MONARCHY', 'DEMOCRACY', 'EMPIRE', 'ARTIFACT', 'DYNASTY', 'COLONY',
+    'ARCHAEOLOGY', 'MEDIEVAL', 'RENAISSANCE', 'INDUSTRIAL', 'TREATY', 'EXPLORATION', 'MIGRATION', 'ECONOMIC',
+    'POLITICAL', 'CULTURAL', 'RELIGION', 'WARFARE'
+  ],
+  geography: [
+    'CONTINENT', 'PENINSULA', 'MOUNTAIN', 'PLATEAU', 'VALLEY', 'DESERT', 'GLACIER', 'ISLAND',
+    'VOLCANO', 'EQUATOR', 'LATITUDE', 'LONGITUDE', 'CLIMATE', 'SAVANNA', 'TUNDRA', 'HEMISPHERE',
+    'TRIBUTARY', 'CARTOGRAPHY', 'POPULATION', 'ELEVATION'
+  ],
+  'earth-science': [
+    'ATMOSPHERE', 'LITHOSPHERE', 'HYDROSPHERE', 'BIOSPHERE', 'EROSION', 'WEATHERING', 'SEDIMENT', 'PLATE',
+    'EARTHQUAKE', 'TSUNAMI', 'HURRICANE', 'METEOROLOGY', 'MINERAL', 'FOSSIL', 'GEOTHERMAL', 'WATERSHED',
+    'LANDFORM', 'AQUIFER', 'TOPOGRAPHY', 'SEISMIC'
+  ],
+  physics: [
+    'MECHANICS', 'DYNAMICS', 'THERMODYNAMICS', 'ELECTROMAGNETISM', 'QUANTUM', 'RELATIVITY', 'VELOCITY', 'ACCELERATION',
+    'MOMENTUM', 'FORCE', 'ENERGY', 'GRAVITY', 'RADIATION', 'FREQUENCY', 'WAVELENGTH', 'NUCLEAR',
+    'PARTICLE', 'MATTER', 'RESONANCE', 'ENTROPY'
+  ],
+  chemistry: [
+    'ELEMENT', 'COMPOUND', 'MIXTURE', 'SOLUTION', 'MOLECULE', 'ATOM', 'ELECTRON', 'PROTON',
+    'NEUTRON', 'ISOTOPE', 'PERIODIC', 'CATALYST', 'REACTION', 'ORGANIC', 'INORGANIC', 'ACID',
+    'BASE', 'EQUILIBRIUM', 'CONCENTRATION', 'OXIDATION'
+  ],
+  biology: [
+    'ECOSYSTEM', 'ORGANISM', 'CELL', 'TISSUE', 'ORGAN', 'GENETICS', 'EVOLUTION', 'SPECIES',
+    'PHOTOSYNTHESIS', 'RESPIRATION', 'REPRODUCTION', 'CHROMOSOME', 'PROTEIN', 'ENZYME', 'HORMONE', 'IMMUNITY',
+    'NEURON', 'TAXONOMY', 'HOMEOSTASIS', 'BIODIVERSITY'
+  ],
+  custom: []
+};
+
+// Game variables
+let word = '';
+let guessedLetters = new Set();
+let remainingGuesses = 6;
+let hintsRemaining = 1;
+let startTime;
+let timerInterval;
+let currentCategory = 'math';
+
+// DOM Elements
+const startScreen = document.getElementById('start-screen');
+const gameScreen = document.getElementById('game-screen');
+const settingsModal = document.getElementById('settings-modal');
+const categorySelect = document.getElementById('word-category');
+const customWordsContainer = document.getElementById('custom-words-container');
+const customWordsTextarea = document.getElementById('custom-words');
+const wordCountMessage = document.getElementById('word-count-message');
+const categoryDisplay = document.getElementById('category-display');
+
+// Event Listeners
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('settings-btn').addEventListener('click', openSettings);
+document.getElementById('close-settings-btn').addEventListener('click', closeSettings);
+document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+document.querySelector('.reset-btn').addEventListener('click', initGame);
+document.querySelector('.hint-btn').addEventListener('click', getHint);
+document.querySelector('.main-menu-btn').addEventListener('click', returnToMainMenu);
+
+// Toggle custom words textarea visibility based on selected category
+categorySelect.addEventListener('change', function() {
+  if (this.value === 'custom') {
+    customWordsContainer.style.display = 'block';
+  } else {
+    customWordsContainer.style.display = 'none';
+  }
+});
+
+// Count words in custom words textarea
+customWordsTextarea.addEventListener('input', countCustomWords);
+
+// Load saved custom words if any
+loadCustomWords();
+
+// Function to handle hangman parts
+const hangmanParts = [
+  '<circle cx="120" cy="75" r="25"/>', // Head
+  '<line x1="120" y1="100" x2="120" y2="150"/>', // Body
+  '<line x1="120" y1="120" x2="85" y2="100"/>', // Left arm
+  '<line x1="120" y1="120" x2="155" y2="100"/>', // Right arm
+  '<line x1="120" y1="150" x2="85" y2="180"/>', // Left leg
+  '<line x1="120" y1="150" x2="155" y2="180"/>' // Right leg
+];
+
+// Start the game
+function startGame() {
+  startScreen.style.display = 'none';
+  gameScreen.style.display = 'flex';
+  initGame();
+}
+
+// Open settings modal
+function openSettings() {
+  settingsModal.classList.add('active');
+}
+
+// Close settings modal
+function closeSettings() {
+  settingsModal.classList.remove('active');
+}
+
+// Save settings
+function saveSettings() {
+  // Get selected category
+  const selectedCategory = categorySelect.value;
+  
+  // Handle custom words
+  if (selectedCategory === 'custom') {
+    const words = getCustomWordsArray();
+    if (words.length < 5) {
+      alert('Please enter at least 5 custom words.');
+      return;
+    }
+    
+    // Save custom words to local storage
+    localStorage.setItem('hangmanCustomWords', JSON.stringify(words));
+    wordBanks.custom = words;
+  }
+  
+  // Update current category
+  currentCategory = selectedCategory;
+  
+  // Update category display
+  updateCategoryDisplay();
+  
+  // Close settings modal
+  closeSettings();
+}
+
+// Count custom words
+function countCustomWords() {
+  const words = getCustomWordsArray();
+  const wordCount = words.length;
+  
+  // Update word count message
+  wordCountMessage.textContent = `${wordCount} words added. ${wordCount < 5 ? 'You need at least 5 words.' : ''}`;
+}
+
+// Get custom words as array
+function getCustomWordsArray() {
+  return customWordsTextarea.value
+    .toUpperCase()
+    .split('\n')
+    .map(word => word.trim())
+    .filter(word => word.length > 0);
+}
+
+// Load custom words from local storage
+function loadCustomWords() {
+  const savedWords = localStorage.getItem('hangmanCustomWords');
+  if (savedWords) {
+    const words = JSON.parse(savedWords);
+    wordBanks.custom = words;
+    customWordsTextarea.value = words.join('\n');
+    countCustomWords();
+  }
+}
+
+// Update category display
+function updateCategoryDisplay() {
+  const displayName = currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1).replace('-', ' ');
+  categoryDisplay.textContent = displayName;
+}
+
+// Return to main menu
+function returnToMainMenu() {
+  gameScreen.style.display = 'none';
+  startScreen.style.display = 'flex';
+  if (timerInterval) clearInterval(timerInterval);
+}
+
+// Update timer
+function updateTimer() {
+  const currentTime = new Date();
+  const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+  const minutes = Math.floor(elapsedSeconds / 60);
+  const seconds = elapsedSeconds % 60;
+  document.querySelector('.timer').textContent = 
+    `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// Initialize the game
+function initGame() {
+  // Get words from current category
+  const words = wordBanks[currentCategory];
+  
+  // Select random word
+  word = words[Math.floor(Math.random() * words.length)];
+  
+  guessedLetters.clear();
+  remainingGuesses = 6;
+  hintsRemaining = 1;
+  document.getElementById('hangman-parts').innerHTML = '';
+  updateDisplay();
+  createKeyboard();
+  document.querySelector('.message').textContent = '';
+  document.querySelector('.hint-btn').disabled = false;
+  
+  // Update category display
+  updateCategoryDisplay();
+  
+  // Reset and start timer
+  if (timerInterval) clearInterval(timerInterval);
+  startTime = new Date();
+  timerInterval = setInterval(updateTimer, 1000);
+}
+
+// Create keyboard
+function createKeyboard() {
+  const keyboard = document.querySelector('.keyboard');
+  keyboard.innerHTML = '';
+  for (let i = 65; i <= 90; i++) {
+    const letter = String.fromCharCode(i);
+    const button = document.createElement('button');
+    button.textContent = letter;
+    button.className = 'key';
+    button.addEventListener('click', () => handleGuess(letter));
+    keyboard.appendChild(button);
+  }
+}
+
+// Handle guess
+function handleGuess(letter) {
+  if (guessedLetters.has(letter)) return;
+  
+  guessedLetters.add(letter);
+  const button = Array.from(document.querySelectorAll('.key'))
+    .find(key => key.textContent === letter);
+  button.classList.add('used');
+  
+  if (!word.includes(letter)) {
+    remainingGuesses--;
+    document.getElementById('hangman-parts').innerHTML += hangmanParts[5 - remainingGuesses];
+  }
+  
+  updateDisplay();
+  checkGameEnd();
+}
+
+// Update display
+function updateDisplay() {
+  const display = document.querySelector('.word-display');
+  display.textContent = word
+    .split('')
+    .map(letter => guessedLetters.has(letter) ? letter : '_')
+    .join(' ');
+}
+
+// Check if game has ended
+function checkGameEnd() {
+  const won = word.split('').every(letter => guessedLetters.has(letter));
+  const lost = remainingGuesses === 0;
+  
+  if (won || lost) {
+    clearInterval(timerInterval);
+    const timeSpent = document.querySelector('.timer').textContent;
+    const message = won ? `🎉 You Won! ${timeSpent} 🎉` : `😔 Game Over! The word was "${word}"! ${timeSpent}`;
+    document.querySelector('.message').textContent = message;
+    document.querySelectorAll('.key').forEach(key => {
+      key.disabled = true;
+      key.classList.add('used');
+    });
+    document.querySelector('.hint-btn').disabled = true;
+  }
+}
+
+// Get hint
+function getHint() {
+  if (hintsRemaining <= 0) return;
+  
+  const unguessedLetters = word
+    .split('')
+    .filter(letter => !guessedLetters.has(letter));
+    
+  if (unguessedLetters.length > 0) {
+    const randomLetter = unguessedLetters[Math.floor(Math.random() * unguessedLetters.length)];
+    handleGuess(randomLetter);
+    hintsRemaining--;
+    document.querySelector('.hint-btn').disabled = true;
+  }
+}
+
+// Hide custom words container initially
+customWordsContainer.style.display = 'none';
+</script>
+<div class="footer">Author: Aaron Shi. v2. Released in March 2025.</div>
+</body></html>
